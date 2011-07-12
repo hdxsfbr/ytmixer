@@ -1,0 +1,562 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<title>YouTubeMix.me: Mix music with youtube videos</title>
+		<link rel="stylesheet" type="text/css" href="/static/css/ui-lightness/jquery-ui-1.8.10.custom.css" /> </head>
+		<style type="text/css">
+			
+		*{border:1px solid gray;margin:0;}
+		
+		li,ul{
+			padding: 0;
+			margin: 0;
+		}
+	
+		li{
+			list-style-type: none;
+			padding: 5px;
+		}
+	
+		#main-wrapper{
+			width:1000px;
+			margin: 0 auto;
+			overflow: auto;
+			border: none;
+			
+		}
+		#mixer{
+			overflow: auto;
+			-moz-border-radius: 5px;
+			border-radius: 5px;
+		}
+		#header {
+			-moz-border-radius: 5px;
+			border-radius: 5px;
+			padding: 5px;
+		}
+		
+		#header h1{
+			border:none;
+		}
+		
+		#player1Wrapper,#player2Wrapper{
+			width: 346px;
+			
+		}
+		#player1Wrapper{
+			float: left;
+		}
+		#player2Wrapper{
+			float: right;
+		}
+		#search{ width:300px;float:left;}
+		
+		#search-bar input{
+			font-size: 15pt;
+		    height: 35px;
+		    padding-left: 3px;
+		    width: 100%;
+		    color: #777777;
+		}
+		
+		.video-wrapper,.volume-wrapper{
+			height: 150px;
+		}	
+		
+		.video-wrapper{
+			width: 296px;
+		}
+		
+		#player1Wrapper .video-wrapper{
+			float:left
+		}
+		
+		#player1Wrapper .volume-wrapper{
+			float: right;
+		}
+		
+		#player2Wrapper .video-wrapper{
+			float:right;
+		}
+		
+		#player2Wrapper .volume-wrapper{
+			float: left;
+		}
+		
+		.volume-wrapper{
+			width:23px;
+			text-align: center;
+		}	
+		
+		.player-volume-wrapper{
+			overflow: hidden;
+		}
+		
+		.volume-div{
+			height: 125px;
+    		margin-top: 13px;
+		}
+		
+		#player1Wrapper .volume-div{
+			float: right;
+		}
+		
+		#player1Wrapper .volume-wrapper{
+			padding-right: 5px;
+		}
+		
+		#player2Wrapper .volume-wrapper{
+			padding-left: 5px;
+		}
+		
+		.player-controls{
+			height:35px;
+		}
+		
+		#search-results-wrapper{
+			height:250px;
+			overflow-y:auto; 
+		}
+		
+		#search-results-wrapper p{
+			margin: 5px;
+			border: none;
+		}
+		
+		#crossfader-wrapper{
+			height:35px;
+			padding: 0 10px;
+			padding-top:18px;
+		}
+		
+		#crossfader{
+			width:274px;
+		}
+		
+		.playlist-wrapper{
+			height:157px;
+			overflow-y: auto;
+		}
+		.playlist li{
+			
+		}
+		
+		
+		.playlist li:first-child{
+			background-color: lightGreen;
+		}
+		
+		#player2Wrapper .playlist-wrapper{
+			direction:rtl;  /* Right to left */ 
+			text-align:left;
+		
+		}
+		
+		.player-controls span{
+			float:left;
+		}
+		
+		.player-controls .loader-bar-wrapper{
+			border: medium none;
+		    float: left;
+		    overflow: auto;
+		    padding: 0 5px;
+		}
+		
+		.ui-progressbar {
+		    height: 15px;
+	    	text-align: left;
+	    	width: 217px;
+		}
+		
+		.playerState{
+			width:40px;
+			height:15px;
+			overflow: hidden;
+		}
+		
+		</style>
+		<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    	<script type="text/javascript">
+      		google.load("swfobject", "2.1");
+    	</script>    
+		
+		<script type="text/javascript" src="/static/js/jquery-1.4.4.min.js"></script>
+		<script type="text/javascript" src="/static/js/jquery-ui-1.8.10.custom.min.js"></script>
+		
+		<script type="text/javascript">
+		function searchYoutube(){
+				$("#search-results-wrapper").text('Loading YouTube videos ...');
+	            
+	            var script = document.createElement('script');
+	            script.setAttribute('id', 'jsonScript');
+	            script.setAttribute('type', 'text/javascript');
+	            script.setAttribute('src', 'http://gdata.youtube.com/feeds/' + 
+	                   'videos?vq='+$("#search-bar input:text").val()+'&max-results=8&' + 
+	                   'alt=json-in-script&callback=displaySearchResults&' + 
+	                   'orderby=relevance&sortorder=descending&format=5&fmt=18');
+	            document.documentElement.firstChild.appendChild(script);
+	        }
+	
+	        function displaySearchResults(data)
+	        {
+	            var feed = data.feed;
+	            var entries = feed.entry || [];
+	            var html = ['<ul id="search-results-list">'];
+	            for (var i = 0; i < entries.length; i++)
+	            {
+	                var entry = entries[i];
+	                var playCount = entry.yt$statistics.viewCount.valueOf() + ' views';
+	                var title = entry.title.$t;
+	                var lnk = '<a href = \"' + entry.link[0].href + '\">link</a>';
+	                html.push('<li id="'+ entry.id.$t+'">', title, '</li>');
+	            }
+	            html.push('</ul>');
+	            $('#search-results-wrapper').html(html.join(''));
+	            $("#search-results-list li").draggable({
+					helper:'clone',
+					connectToSortable:'#player1Wrapper ul,#player2Wrapper ul'
+				});
+	        }
+	        
+	
+		
+			$(function(){
+				$("#search-results-list li").draggable({
+					helper:'clone',
+					connectToSortable:'#player1Wrapper ul,#player2Wrapper ul'
+					
+				});
+				$("#player1Wrapper ul,#player2Wrapper ul").droppable({
+					//activeClass: "ui-state-default",
+					//hoverClass: "ui-state-hover",
+					accept: ":not(.ui-sortable-helper)",
+					drop: function( event, ui ) {
+						// console.log(ui);
+						// $( "<li></li>" ).text( ui.draggable.text() ).appendTo( this );
+					}
+				}).sortable({
+					items: "li:not(:first)",
+					sort: function() {
+						$( this ).removeClass( "ui-state-default" );
+					},
+					receive: function(event,ui){
+						console.log(ui.toSource());
+					}
+				});
+				
+				$(".volume-div").slider({orientation:"vertical"});
+
+				$("#search-bar input").click(function(){
+					if($(this).val() === "Search YouTube"){
+						$(this).val('');
+					}
+				});
+				
+				//-----------search --------------------
+				
+		       $("#search-form").submit(function(){
+					searchYoutube();
+					return false;
+				});
+				
+				$("#search-form input").blur(function(){
+					if($(this).val() === ""){
+						$(this).val("Search YouTube");
+					}
+				});
+
+			});
+			
+			
+	//MIXER CODE-----------------------------------------------------
+			
+	function onYouTubePlayerReady(playerId) {
+	    YTMixer[playerId].playerReady();
+	}
+	
+	var YTPlayer = function (playerID,videoID) {
+	    var self = this;
+	    self.id = playerID;
+	    self.player;
+	    self.containerID = playerID + "-video-div";
+	    self.$volumeSlider;
+	    self.maxVolume = 50;
+	    self.currentVideoID = videoID;
+		self.playlist = [];
+		//self.errorStatuses = 
+		self.errorDict = {
+	    		2: "Invalid id.",
+	    		100:"Not found.",
+	    		101:"No embed",
+	    		150:"No embed"
+    	};
+    	
+    	self.stateDict = {
+    		'-1': "Unstarted",
+    		0: "Ended",
+    		1: "Playing",
+    		2: "Paused",
+    		3: "Buffering",
+    		5: "Cued",
+    	};
+
+	    self.loadPlayer = function () {
+	        var params = {
+	            allowScriptAccess: "always"
+	        };
+	        var atts = {
+	            id: self.id
+	        };
+	        swfobject.embedSWF("http://www.youtube.com/apiplayer?" + "&enablejsapi=1&playerapiid=" + atts.id, 
+	        						self.containerID, "296", "146", "8", null, null, params, atts);
+	    };
+	
+	    self.updatePlayerInfo = function () {
+	        if (self.player && self.player.getDuration) {
+	        	
+	            $("#" + self.id + "Wrapper .videoDuration").html(self.player.getDuration());
+	            $("#" + self.id + "Wrapper .videoCurrentTime").html(self.player.getCurrentTime());
+	            $("#" + self.id + "Wrapper .bytesTotal").html(self.player.getVideoBytesTotal());
+	            $("#" + self.id + "Wrapper .startBytes").html(self.player.getVideoStartBytes());
+	            $("#" + self.id + "Wrapper .bytesLoaded").html(self.player.getVideoBytesLoaded());
+	            $("#" + self.id + "Wrapper .volume").html(self.player.getVolume());
+	            $("#"+self.id+"Wrapper div.loader-bar").progressbar('value',((self.player.getCurrentTime()/self.player.getDuration())*100));
+	        }
+	    };
+	
+	    self.onPlayerStateChange = function (newState) {
+	    	// console.log(typeof newState);
+	    	// console.log($("#" + self.id + "Wrapper .playerState"));
+	        $("#" + self.id + "Wrapper .playerState").html(self.stateDict[newState]);
+	        if(self.stateDict[newState] === "Ended"){
+	        	$(self.playlist.selector+":first").slideUp("slow",function(){
+		        	$(self.playlist.selector+":first").remove();	
+		        	self.playlist = $(self.playlist.selector);
+					if(self.playlist.length != 0){
+						self.player.cueVideoByUrl(self.getVideoIdFromUrl(self.playlist[0].getAttribute("id")));						
+						self.player.playVideo();
+					}
+	        	});
+	        }
+	    };
+	
+	    self.onPlayerError = function (errorCode) {
+	        console.log("An error occured of type:" + self.errorDict[errorCode]);
+	        $("#" + self.id + "Wrapper .playerState").html(self.errorDict[errorCode]);
+	    };
+	    
+	    self.getVideoIdFromUrl = function(aUrl){
+	    	var splitUrl = aUrl.split("/");
+	        return  splitUrl[splitUrl.length - 1];
+	    	
+	    };
+	
+	    self.playerReady = function () {
+	        self.player = document.getElementById(self.id);
+	        self.player.setVolume(42);
+	        setInterval(self.updatePlayerInfo, 250);
+	        self.updatePlayerInfo();
+	        self.player.addEventListener("onStateChange", "YTMixer." + self.id + ".onPlayerStateChange");
+	        self.player.addEventListener("onError", "YTMixer." + self.id + ".onPlayerError");
+	        self.player.cueVideoByUrl(self.getVideoIdFromUrl(self.playlist[0].getAttribute("id")));
+	        self.$volumeSlider.slider('option','value',50);
+
+	        $("#"+self.id+"Wrapper div.loader-bar").progressbar({
+	        	value:0
+	        }).click(function(e){
+	        	var seekToPercentage = (e.pageX - $(this).offset().left)/$(this).outerWidth();
+	        	self.player.seekTo(self.player.getDuration()*seekToPercentage,true);
+	        	console.log((e.pageX - $(this).offset().left)/$(this).outerWidth());
+	        });
+	    };
+		
+		self.hookUIEvents = function(){
+			$("#" + self.id+ "Wrapper .playButton").click(function(){
+				self.player.playVideo();
+			});
+			$("#" + self.id + "Wrapper .pauseButton").click(function(){
+				self.player.pauseVideo();
+			});
+			$("#" + self.id + "Wrapper .muteButton").click(function(){
+				if($(this).hasClass("ui-icon-volume-on")){
+					$(this).removeClass("ui-icon-volume-on");
+					$(this).addClass("ui-icon-volume-off");
+					self.player.mute();
+				}else{
+					$(this).removeClass("ui-icon-volume-off");
+					$(this).addClass("ui-icon-volume-on");
+					self.player.unMute();
+				}
+				
+			});
+			
+				$("#" + self.id + "Wrapper .nextButton").click(function(){
+					$(self.playlist.selector+":first").slideUp("slow",function(){
+					$(self.playlist.selector+":first").remove();
+					self.playlist = $(self.playlist.selector);
+					if(self.playlist.length != 0){
+						self.player.cueVideoByUrl(self.getVideoIdFromUrl(self.playlist[0].getAttribute("id")));						
+					}
+					});
+				});
+			
+			$("#" + self.id + "Wrapper .unMuteButton").click(function(){
+				self.player.unMute();
+			});
+			
+			self.$volumeSlider = $("#" + self.id + "Wrapper .volume-div")
+				.slider({orientation:"vertical",
+						 slide: function(event,ui){
+						 	self.maxVolume = ui.value;
+						 	YTMixer.setVolumes();
+						 }
+				});
+		};
+		
+		self.loadPlaylist = function(){
+			self.playlist = $("#" + self.id + "Wrapper .playlist li");
+		};
+		
+	    self.init = function () {
+	        self.loadPlayer();
+	        self.hookUIEvents();
+	        self.loadPlaylist();
+	    };
+	
+	}
+	var YTMixer = {
+		player1ID: "player1",
+		player2ID: "player2",
+		$mixerSlider:undefined,
+		
+		initCrossfader: function(){
+			var that = this;
+			this.$mixerSlider = $("#crossfader").slider({
+				value:50,
+				slide:function(){
+					that.setVolumes();
+			}});
+		},
+		
+		setVolumes: function(){
+			var mixerValue = this.$mixerSlider.slider('option',"value");
+			var p1 = this[this.player1ID],p2 = this[this.player2ID];
+			var mixerValuePercentage = mixerValue/100;
+			//crossfade formula: vol = .5(1+cos(xxPi))
+			var player1Ratio = .5*(1 + Math.cos(mixerValuePercentage * mixerValuePercentage * Math.PI));
+			var player2Ratio = .5*(1 + Math.cos((1-mixerValuePercentage) * (1-mixerValuePercentage) * Math.PI));
+			
+			p1.player.setVolume(p1.maxVolume * player1Ratio);
+			p2.player.setVolume(p2.maxVolume * player2Ratio);
+			console.log("p1:" + p1.player.getVolume() + " p2:" + p2.player.getVolume());
+		},
+		
+		init: function(){
+			this.initCrossfader();
+			this[this.player1ID] = new YTPlayer(this.player1ID,"hglVqACd1C8");
+		    this[this.player1ID].init();
+		    this[this.player2ID] = new YTPlayer(this.player2ID,"UhjG47gtMCo");
+		    this[this.player2ID].init();
+		}
+		
+	}
+	
+	function _run() {
+	    YTMixer.init();
+	}
+	google.setOnLoadCallback(_run);
+			
+			
+			//MIXER CODE----------------------END-------------------------------
+			
+		</script>
+	</head>
+	<body>
+	<div id="main-wrapper">
+		<div id="header">
+			<h1>YouTubeMix.me</h1>			
+		</div>
+		<div id="mixer">
+			<div id="player1Wrapper">
+				<div class='player-volume-wrapper'>
+					<div class="video-wrapper"><div id="player1-video-div" class="video-div">Loading...</div></div>
+					<div class="volume-wrapper"><div class="volume-div"></div></div>
+				</div>
+				<div class="player-controls">
+					<p>
+						<span class="ui-icon ui-icon-play playButton"></span> 
+						<span class="ui-icon ui-icon-pause pauseButton"></span> 
+						<span class="ui-icon ui-icon-seek-end nextButton"></span> 
+						<span class="ui-icon ui-icon-volume-on muteButton"></span> 
+						<div class="loader-bar-wrapper">
+							<div class="loader-bar"></div>
+						</div>
+						<span class="playerState"></span>
+					</p>
+				</div>
+				<div class="playlist-wrapper">
+					<ul class="playlist">
+						<li id="http://gdata.youtube.com/feeds/videos/UhjG47gtMCo">Tool - Schism</li>
+						<li id="http://gdata.youtube.com/feeds/videos/RiV_ue-PbL4">Tool - Parabola</li>
+						<li id="http://gdata.youtube.com/feeds/videos/07pLGIgyfjw">Tool - Stinkfist [hq - fullscreen]</li>
+						<li id="http://gdata.youtube.com/feeds/videos/R2F_hGwD26g">Tool - The Pot</li>
+						<li id="http://gdata.youtube.com/feeds/videos/UUXBCdt5IPg">Tool</li>
+					</ul>
+				</div>
+			</div>	
+			<div id="search">
+				<div id="search-bar">
+					<form id ="search-form" >
+						<input type="text" value="Search YouTube" />
+					</form>	
+				</div>
+				<div id="search-results-wrapper">
+						<p>
+							Welcome to YouTubeMix.me!
+						</p>
+						<p>
+							Search for videos above, drag the items from search results to a player queue, 
+							sort the queue as appropriate and use the crossfader to mix the sound!
+						</p>
+						<p> 
+							Keep in mind this is a pre-alpha release so features are limited and bugs exist.
+						</p>
+						<p>Have Fun!</p>
+						<p>Email <b>batista.sjsu@gmail.com</b> with your feedback.</p>
+				</div>
+				<div id="crossfader-wrapper"><div id="crossfader"></div></div>
+			</div>
+			<div id="player2Wrapper">
+				<div class='player-volume-wrapper'>
+					<div class="video-wrapper"><div id="player2-video-div" class="video-div">Loading...</div></div>
+					<div class="volume-wrapper"><div class="volume-div"></div></div>
+				</div>
+				<div class="player-controls">
+					<p>
+						<span class="ui-icon ui-icon-play playButton"></span>  
+						<span class="ui-icon ui-icon-pause pauseButton"></span> 
+						<span class="ui-icon ui-icon-seek-end nextButton"></span> 
+						<span class="ui-icon ui-icon-volume-on muteButton"></span> 
+						<div class="loader-bar-wrapper">
+							<div class="loader-bar"></div>
+						</div>
+						
+						<span style="float:left" class="playerState"></span>
+					</p>
+				</div>
+				<div class="playlist-wrapper">
+					<ul class="playlist">
+						<li id="http://gdata.youtube.com/feeds/videos/xvCEgNgphyQ">Psy Trance - Astrix - Optical Vibes</li>
+						<li id="http://gdata.youtube.com/feeds/videos/_RBtcqRE0ME"> Psychedelic Trance</li>
+						<li id="http://gdata.youtube.com/feeds/videos/VjqAAJJb7NY"> Depeche Mode - Enjoy The Silence: REMIX</li>
+						<li id="http://gdata.youtube.com/feeds/videos/-Tjl2u9wI68">Psy Trance - Dark Psychedelic Visuals - Atom Grinder psytrance</li>
+						<li id="http://gdata.youtube.com/feeds/videos/HoQroj65fds"> Aquatica - Side Off (Cosmic Tone Remix) [PsyTrance]</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	</body>
+</html>
